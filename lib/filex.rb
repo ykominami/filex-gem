@@ -81,7 +81,6 @@ module Filex
       begin
         mes.outputInfo("erubyStr=|#{erubyStr}|")
         mes.outputInfo("data=#{data}")
-p data.class
         strdata=Erubis::Eruby.new(erubyStr).result(data)
       rescue NameError => ex
         mes.outputException(ex)
