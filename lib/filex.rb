@@ -5,6 +5,7 @@ module Filex
   require 'pp'
   require 'erubis'
   require 'yaml'
+  require 'messagex'
 
   class Error < StandardError; end
   # Your code goes here...
@@ -92,6 +93,17 @@ module Filex
         exit(mes.ec("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY"))
       end
       strdata
+    end
+
+    def self.checkAndExpandAndCopyFile(fname, ofname, objx, mes)
+      strdata=checkAndLoadFile(fname, mes)
+      mes.outputInfo("fname=#{fname}")
+      mes.outputInfo("strdata=#{strdata}")
+      mes.outputInfo("objx=#{objx}")
+      strdata2=expandStr(strdata, objx, mes, {fname: fname})
+      File.open(ofname, 'w'){|of|
+        of.write(strdata2)
+      }
     end
 
     def self.checkAndExpandFile(fname, objx, mes)
