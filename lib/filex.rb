@@ -79,11 +79,11 @@ module Filex
       strdata
     end
 
-    def self.expand_str(erubyStr, data, mes, fnames={})
+    def self.expand_str(eruby_str, data, mes, fnames={})
       begin
-        mes.outputInfo("erubyStr=|#{erubyStr}|")
+        mes.outputInfo("eruby_str=|#{eruby_str}|")
         mes.outputInfo("data=#{data}")
-        strdata = Erubis::Eruby.new(erubyStr).result(data)
+        strdata = Erubis::Eruby.new(eruby_str).result(data)
       rescue NameError => e
         mes.outputException(e)
         fnames.map {|x| mes.outputFatal(%Q(#{x[0]}=#{x[1]})) }
