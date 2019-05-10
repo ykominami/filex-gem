@@ -94,18 +94,7 @@ module Filex
       end
       strdata
     end
-=begin
-    def self.checkAndExpandAndCopyFile(fname, ofname, objx, mes)
-      strdata = checkAndLoadFile(fname, mes)
-      mes.outputInfo("fname=#{fname}")
-      mes.outputInfo("strdata=#{strdata}")
-      mes.outputInfo("objx=#{objx}")
-      strdata2 = expandStr(strdata, objx, mes, { fname: fname })
-      File.open(ofname, "w")  do |of|
-        of.write(strdata2)
-      end
-    end
-=end
+
     def self.check_and_expand_file(fname, objx, mes)
       strdata = checkAndLoadFile(fname, mes)
       mes.outputInfo("fname=#{fname}")
