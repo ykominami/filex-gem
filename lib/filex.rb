@@ -1,14 +1,14 @@
 require "filex/version"
 
 module Filex
-  require 'digest'
-  require 'pp'
-  require 'erubis'
-  require 'yaml'
-  require 'messagex'
+  require "digest"
+  require "pp"
+  require "erubis"
+  require "yaml"
+  require "messagex"
 
   class Error < StandardError; end
-  # Your code goes here...
+
   class Filex
     def self.setup(mes)
       mes.addExitCode("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE")
@@ -16,157 +16,232 @@ module Filex
       mes.addExitCode("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY")
     end
 
-    def self.loadYaml(str, mes)
-      yamlhs={}
+    def self.load_yaml(str, mes)
+      yamlhs = {}
       begin
-        yamlhs=YAML.load(str)
-      rescue Error => ex
-        mes.outputException(ex)
+        yamlhs = YAML.safe_load(str)
+      rescue Error => e
+        mes.outputException(e)
         exit(mes.ec("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE"))
       end
 
       yamlhs
     end
 
-    def self.checkAndLoadYamlfile(yamlfname, mes)
-      str=Filex.checkAndLoadFile(yamlfname, mes)
-      self.loadYaml(str, mes)
+    def self.check_and_load_yamlfile(yamlfname, mes)
+      str = Filex.checkAndLoadFile(yamlfname, mes)
+      loadYaml(str, mes)
     end
 
-    def self.checkAndExpandYamlfile(yamlfname, objx, mes)
-      lines=Filex.checkAndExpandFileLines(yamlfname, objx, mes)
-      str=self.escapeBySingleQuoteInYamlFormatOneLines(lines).join("\n")
+    def self.check_and_expand_yamlfile(yamlfname, objx, mes)
+      lines = Filex.checkAndExpandFileLines(yamlfname, objx, mes)
+      str = escapeBySingleQuoteWithLinesInYamlFormat(lines, mes).join("\n")
       mes.outputDebug("=str")
       mes.outputDebug(str)
-      self.loadYaml(str, mes)
+      loadYaml(str, mes)
     end
 
-    def self.checkAndExpandFileLines(fname, data, mes)
-       checkAndExpandFile(fname, data, mes).split("\n")
+    def self.check_and_expand_file_lines(fname, data, mes)
+      checkAndExpandFile(fname, data, mes).split("\n")
     end
 
-    def self.checkAndLoadFile(fname, mes)
-      size=File.size?(fname)
-      if size and size > 0
+    def self.check_and_load_file(fname, mes)
+      size = File.size?(fname)
+      if size && (size > 0)
         begin
-          strdata=File.read(fname)
-        rescue IOError => ex
+          strdata = File.read(fname)
+        rescue IOError => e
           mesg = "Can't read #{fname}"
           mes.outputFatal(mesg)
-          mes.outputException(ex)
+          mes.outputException(e)
           exit(mes.ec("EXIT_CODE_CANNOT_READ_FILE"))
-        rescue SystemCallError => ex
+        rescue SystemCallError => e
           mesg = "Can't write #{fname}"
           mes.outputFatal(mesg)
-          mes.outputException(ex)
+          mes.outputException(e)
           exit(mes.ec("EXIT_CODE_CANNOT_READ_FILE"))
         end
       else
-        mesg=%Q!Can not find #{fname} or is empty| size=|#{size}|!
+        mesg = %Q(Can not find #{fname} or is empty| size=|#{size}|)
         mes.outputError(mesg)
         exit(mes.ec("EXIT_CODE_CANNOT_FIND_FILE_OR_EMPTY"))
       end
 
       if strdata.strip.empty?
-        mesg=%Q!#{fname} is empty!
+        mesg = %Q(#{fname} is empty)
         mes.outputFatal(mesg)
         exit(mes.ec("EXIT_CODE_FILE_IS_EMPTY"))
       else
-#        mes.outputInfo(Digest::MD5.hexdigest(strdata))
+        # mes.outputInfo(Digest::MD5.hexdigest(strdata))
       end
 
       strdata
     end
 
-    def self.expandStr(erubyStr, data, mes,fnames={})
+    def self.expand_str(erubyStr, data, mes, fnames={})
       begin
         mes.outputInfo("erubyStr=|#{erubyStr}|")
         mes.outputInfo("data=#{data}")
-        strdata=Erubis::Eruby.new(erubyStr).result(data)
-      rescue NameError => ex
-        mes.outputException(ex)
-        fnames.map{|x| mes.outputFatal( %Q!#{x[0]}=#{x[1]}! )}
+        strdata = Erubis::Eruby.new(erubyStr).result(data)
+      rescue NameError => e
+        mes.outputException(e)
+        fnames.map {|x| mes.outputFatal(%Q(#{x[0]}=#{x[1]})) }
         exit(mes.ec("EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY"))
-      rescue Error => ex
-        mes.outputException(ex)
-        fnames.map{|x| mes.outputFatal(%Q!#{x[0]}=#{x[1]}!) }
+      rescue Error => e
+        mes.outputException(e)
+        fnames.map {|x| mes.outputFatal(%Q(#{x[0]}=#{x[1]})) }
         exit(mes.ec("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY"))
       end
       strdata
     end
-
+=begin
     def self.checkAndExpandAndCopyFile(fname, ofname, objx, mes)
-      strdata=checkAndLoadFile(fname, mes)
+      strdata = checkAndLoadFile(fname, mes)
       mes.outputInfo("fname=#{fname}")
       mes.outputInfo("strdata=#{strdata}")
       mes.outputInfo("objx=#{objx}")
-      strdata2=expandStr(strdata, objx, mes, {fname: fname})
-      File.open(ofname, 'w'){|of|
+      strdata2 = expandStr(strdata, objx, mes, { fname: fname })
+      File.open(ofname, "w")  do |of|
         of.write(strdata2)
-      }
+      end
     end
-
-    def self.checkAndExpandFile(fname, objx, mes)
-      strdata=checkAndLoadFile(fname, mes)
+=end
+    def self.check_and_expand_file(fname, objx, mes)
+      strdata = checkAndLoadFile(fname, mes)
       mes.outputInfo("fname=#{fname}")
       mes.outputInfo("strdata=#{strdata}")
       mes.outputInfo("objx=#{objx}")
-      strdata2=expandStr(strdata, objx, mes, {fname: fname})
+      strdata2 = expandStr(strdata, objx, mes, { fname: fname })
       strdata2
     end
 
-    def self.escapeBySingleQuoteInYamlFormatOneLines(lines)
-      prevQuoto=false
-      str=lines.map{|x|
-        index=x.index('*')
-        index=x.index(':') unless index
-        if index
-          index2=x.index(%q!'!)
-          unless index2
-            y=Filex.escapeBySingleQuoteInYamlFormatOneLine(x, prevQuoto)
-            prevQuoto=true
-          else
-            y=x
-          end
-          y
-        else
-          x
-        end
-      }
+    def self.colon_space(str)
+      if (m = /^(\s*([^\s]+):\s)(.*)$/.match(str))
+        key = m[1]
+        value = m[3]
+      end
+
+      [key, value]
     end
 
-    def self.escapeBySingleQuoteInYamlFormatOneLine(x, prevQuotoFlag=false)
-      if (m=/(^[\s\-]+)([^\-\s\:].*)/.match(x))
-        l=m[1]
-        r=m[2]
-        if prevQuotoFlag
-          l+"'"+r+"'"
-        else
-          index=r.index('-')
-          index=r.index('*') unless index
-          index=r.index(':') unless index
-          if index
-            l+"'"+r+"'"
-          else
-            l+r
+    def self.colon_not_space(str)
+      if (m = /^(\s*([^\s]+):[^\s])(.*)$/.match(str))
+        key = m[1]
+        value = m[3]
+      end
+
+      [key, value]
+    end
+
+    def self.colon(str)
+      if (m = /^(\s*([^\s]+):)(.*)$/.match(str))
+        key = m[1]
+        value = m[3]
+      end
+
+      [key, value]
+    end
+
+    def self.hyphen_space(str)
+      if (m = /^(\s*((\-\s+)+))(.+)$/.match(str))
+        key = m[1]
+        value = m[4]
+      end
+
+      [key, value]
+    end
+
+    def self.escape_single_quote_yaml_first(line, state)
+      k, v = colon_space(line)
+      state[:mes].outputInfo("1|k=#{k}")
+      k, v = colon(line) unless k
+      state[:mes].outputInfo("2|k=#{k}")
+
+      if v&.index("-")
+        k, v = hyphen_space(line)
+        state[:mes].outputInfo("3|k=#{k}")
+        if k
+          state[:need_quoto] = true
+          state[:mes].outputInfo("NQ|1|need_quoto=#{state[:need_quoto]}")
+        end
+      end
+
+      unless k
+        k, v = hyphen_space(line)
+      end
+
+      [k, v]
+    end
+
+    def self.escape_single_quote_yaml_second(line, state, key, value)
+      state[:mes].outputInfo("4|k=#{key}|v=#{value}")
+
+      return [key, value] if value.nil? || value.strip.empty?
+
+      state[:has_quoto] = true if value.index("'")
+
+      return [key, value] if value.index(":").nil?
+
+      rerurn([key, value]) if /\d:/.match?(value)
+
+      k2, v2 = colon_space(value)
+      state[:mes].outputInfo("51|k2=#{k2}|v2=#{v2}")
+
+      unless k2
+        k3, v3 = colon_not_space(value)
+        state[:mes].outputInfo("52|k3=#{k3}|v3=#{v3}")
+        state[:need_quoto] = true
+
+        unless k3
+          k2, v2 = colon(value)
+          state[:mes].outputInfo("53|k2=#{k2}|v2=#{v2}")
+          state[:need_quoto] = true
+        end
+      end
+
+      if k2
+        key += k2
+        value = v2
+        state[:mes].outputInfo("6|k=#{key}|v=#{value}")
+      end
+      [key, value]
+    end
+
+    def self.escape_single_quote_yaml_third(line, state, key, value)
+      return line if value.nil? || value.strip.empty?
+
+      unless state[:need_quoto]
+        if value.index(":") || value.index("*")
+          state[:mes].outputInfo("1 not need_quoto")
+          unless value.index("-")
+            state[:need_quoto] = true
+            state[:mes].outputInfo("NQ|2|need_quoto=#{state[:need_quoto]}")
           end
+          state[:mes].outputInfo("1A need_quoto=#{need_quoto}")
         end
-      elsif (index=x.index(':'))
-        if index
-          l=x.slice(0,(index+1))
-          r=x.slice((index+1),x.size)
-        else
-          l=x
-          r=nil
-        end
-        #      l,r=x.split(':')
-        if r and !(r.strip.empty?)
-          l+"'"+r+"'"
-        else
-          l
-        end
+      end
+
+      if state[:need_quoto] && !state[:has_quoto]
+        state[:mes].outputInfo("2 need_quoto")
+        key + %q(') + value + %q(')
       else
-        x
+        line
+      end
+    end
+
+    def self.escapeBySingleQuoteWithLinesInYamlFormat(lines, mes)
+      state = { mes: mes }
+      lines.map do |line|
+        state[:need_quot] = false
+        state[:has_quoto] = false
+
+        k, v = escape_single_quote_yaml_first(line, state)
+        k, v = escape_single_quote_yaml_second(line, state, k, v)
+        if k
+          escape_single_quote_yaml_third(line, state, k, v)
+        else
+          line
+        end
       end
     end
   end
