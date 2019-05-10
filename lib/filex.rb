@@ -29,20 +29,20 @@ module Filex
     end
 
     def self.check_and_load_yamlfile(yamlfname, mes)
-      str = Filex.checkAndLoadFile(yamlfname, mes)
-      loadYaml(str, mes)
+      str = Filex.check_and_load_file(yamlfname, mes)
+      load_yaml(str, mes)
     end
 
     def self.check_and_expand_yamlfile(yamlfname, objx, mes)
-      lines = Filex.checkAndExpandFileLines(yamlfname, objx, mes)
-      str = escapeBySingleQuoteWithLinesInYamlFormat(lines, mes).join("\n")
+      lines = Filex.check_and_expand_file_lines(yamlfname, objx, mes)
+      str = escape_by_single_quote_with_lines_in_yamlformat(lines, mes).join("\n")
       mes.outputDebug("=str")
       mes.outputDebug(str)
-      loadYaml(str, mes)
+      load_yaml(str, mes)
     end
 
     def self.check_and_expand_file_lines(fname, data, mes)
-      checkAndExpandFile(fname, data, mes).split("\n")
+      check_and_expand_file(fname, data, mes).split("\n")
     end
 
     def self.check_and_load_file(fname, mes)
@@ -72,7 +72,8 @@ module Filex
         mes.outputFatal(mesg)
         exit(mes.ec("EXIT_CODE_FILE_IS_EMPTY"))
       else
-        # mes.outputInfo(Digest::MD5.hexdigest(strdata))
+        digest = Digest::MD5.hexdigest(strdata)
+        mes.outputInfo(digest)
       end
 
       strdata
@@ -96,11 +97,11 @@ module Filex
     end
 
     def self.check_and_expand_file(fname, objx, mes)
-      strdata = checkAndLoadFile(fname, mes)
+      strdata = check_and_load_file(fname, mes)
       mes.outputInfo("fname=#{fname}")
       mes.outputInfo("strdata=#{strdata}")
       mes.outputInfo("objx=#{objx}")
-      strdata2 = expandStr(strdata, objx, mes, { fname: fname })
+      strdata2 = expand_str(strdata, objx, mes, { fname: fname })
       strdata2
     end
 
@@ -218,7 +219,7 @@ module Filex
       end
     end
 
-    def self.escapeBySingleQuoteWithLinesInYamlFormat(lines, mes)
+    def self.escape_by_single_quote_with_lines_in_yamlformat(lines, mes)
       state = { mes: mes }
       lines.map do |line|
         state[:need_quot] = false
