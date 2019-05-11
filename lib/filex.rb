@@ -22,6 +22,7 @@ module Filex
         yamlhs = YAML.safe_load(str)
       rescue Error => e
         mes.outputException(e)
+        mes.outputFatal("str=#{str}")
         exit(mes.ec("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE"))
       end
 
@@ -172,7 +173,7 @@ module Filex
 
       return [key, value] if value.index(":").nil?
 
-      rerurn([key, value]) if /\d:/.match?(value)
+      return([key, value]) if /\d:/.match?(value)
 
       k2, v2 = colon_space(value)
       state[:mes].outputInfo("51|k2=#{k2}|v2=#{v2}")
@@ -207,7 +208,7 @@ module Filex
             state[:need_quoto] = true
             state[:mes].outputInfo("NQ|2|need_quoto=#{state[:need_quoto]}")
           end
-          state[:mes].outputInfo("1A need_quoto=#{need_quoto}")
+          state[:mes].outputInfo("1A need_quoto=#{state[:need_quoto]}")
         end
       end
 
@@ -220,9 +221,10 @@ module Filex
     end
 
     def self.escape_by_single_quote_with_lines_in_yamlformat(lines, mes)
+#    def self.flines4(lines, mes)
       state = { mes: mes }
       lines.map do |line|
-        state[:need_quot] = false
+        state[:need_quoto] = false
         state[:has_quoto] = false
 
         k, v = escape_single_quote_yaml_first(line, state)
