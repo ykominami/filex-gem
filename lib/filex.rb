@@ -221,7 +221,6 @@ module Filex
     end
 
     def self.escape_by_single_quote_with_lines_in_yamlformat(lines, mes)
-#    def self.flines4(lines, mes)
       state = { mes: mes }
       lines.map do |line|
         state[:need_quoto] = false
