@@ -14,6 +14,7 @@ module Filex
       mes.add_exitcode("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE")
       mes.add_exitcode("EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY")
       mes.add_exitcode("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY")
+      mes.add_exitcode("EXIT_CODE_FILE_IS_EMPTY")
     end
 
     def self.load_yaml(str, mes)
