@@ -1,15 +1,28 @@
-require "filex/version"
+# frozen_string_literal: true
 
+#
+# ファイル操作用モジュール
+#
 module Filex
   require "digest"
   require "pp"
   require "erubis"
   require "yaml"
   require "messagex"
+  require "filex/version"
 
+  #
+  # ファイル操作用モジュールのエラークラス
+  #
   class Error < StandardError; end
 
+  #
+  # ファイル操作用モジュール
+  #
   class Filex
+    #
+    # Filexクラスで利用する終了ステータスの登録
+    # @param mes [Messagex] Messagexクラスのインスタンス
     def self.setup(mes)
       mes.add_exitcode("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE")
       mes.add_exitcode("EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY")
@@ -17,6 +30,11 @@ module Filex
       mes.add_exitcode("EXIT_CODE_FILE_IS_EMPTY")
     end
 
+    #
+    # YAML形式文字列をRubyのオブジェクトに変換
+    # @param str [String] YAML形式の文字列
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [Hash] YAMLの変換結果
     def self.load_yaml(str, mes)
       yamlhs = {}
       begin
@@ -30,11 +48,22 @@ module Filex
       yamlhs
     end
 
+    #
+    # YAML形式ファイルをRubyのオブジェクトに変換
+    # @param yamlfname [String] yamlファイル名
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [Hash] YAMLの変換結果
     def self.check_and_load_yamlfile(yamlfname, mes)
       str = Filex.check_and_load_file(yamlfname, mes)
       load_yaml(str, mes)
     end
 
+    #
+    # YAML形式ファイルを存在チェック、（eRubyスクリプトとしての）YAMLファイルをハッシュを用いて置換した後にRubyのオブジェクトに変換
+    # @param yamlfname [String] yamlファイル名(eRubyスクリプトでもある)
+    # @param objx [Hash] eRubyスクリプト置換用ハッシュ
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [Hash] YAMLの変換結果
     def self.check_and_expand_yamlfile(yamlfname, objx, mes)
       lines = Filex.check_and_expand_file_lines(yamlfname, objx, mes)
       str = escape_by_single_quote_with_lines_in_yamlformat(lines, mes).join("\n")
@@ -43,10 +72,21 @@ module Filex
       load_yaml(str, mes)
     end
 
+    #
+    # eRubyスクリプトの存在チェック、ハッシュを用いて置換した後に全体を文字列に変換
+    # @param fname [String] eRubyスクリプト名
+    # @param data [Hash] eRubyスクリプト置換用ハッシュ
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [String] eRubyスクリプトの変換結果
     def self.check_and_expand_file_lines(fname, data, mes)
       check_and_expand_file(fname, data, mes).split("\n")
     end
 
+    #
+    # テキストファイルの存在チェック、ファイルの内容を文字列に変換
+    # @param fname [String] ファイル名
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [String] ファイルの内容
     def self.check_and_load_file(fname, mes)
       size = File.size?(fname)
       if size && (size > 0)
@@ -81,6 +121,13 @@ module Filex
       strdata
     end
 
+    #
+    # eRubyスクリプトファイルの存在チェック、ハッシュを用いて置換後の内容を文字列に変換
+    # @param eruby_str [String] eRubyスクリプト文字列
+    # @param data [Hash] eRubyスクリプト置換用ハッシュ
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @param fnames [Hash] 入力ファイル名群
+    # @return [String] eRubyスクリプトの変換結果
     def self.expand_str(eruby_str, data, mes, fnames={})
       begin
         mes.output_info("eruby_str=|#{eruby_str}|")
@@ -98,52 +145,80 @@ module Filex
       strdata
     end
 
+    #
+    # eRubyスクリプトの存在チェック、ハッシュを用いてを置換後に文字列に変換
+    # @param fname [String] eRubyスクリプトファイル
+    # @param objx [Hash] eRubyスクリプト置換用ハッシュ
+    # @param mes [Messagex] Messagexクラスのインスタンス
+    # @return [String] eRubyスクリプトファイルの変換結果
     def self.check_and_expand_file(fname, objx, mes)
       strdata = check_and_load_file(fname, mes)
       mes.output_info("fname=#{fname}")
       mes.output_info("strdata=#{strdata}")
       mes.output_info("objx=#{objx}")
-      strdata2 = expand_str(strdata, objx, mes, { fname: fname })
+      strdata2 = expand_str(strdata, objx, mes, fname: fname)
       strdata2
     end
 
+    #
+    # 最初に現れる「:」と空白文字の組み合わせを区切り文字列として、文字列を２つに分割する
+    # @param str [String] 分割対象文字列
+    # @return [Array] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.colon_space(str)
       if (m = /^(\s*([^\s]+):\s)(.*)$/.match(str))
-        key = m[1]
-        value = m[3]
+        left = m[1]
+        right = m[3]
       end
 
-      [key, value]
+      [left, right]
     end
 
+    #
+    # 最初に現れる「:」と空白文字以外の文字の組み合わせを区切り文字列として、文字列を２つに分割する
+    # @param str [String] 分割対象文字列
+    # @return [Array] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.colon_not_space(str)
       if (m = /^(\s*([^\s]+):[^\s])(.*)$/.match(str))
-        key = m[1]
-        value = m[3]
+        left = m[1]
+        right = m[3]
       end
 
-      [key, value]
+      [left, right]
     end
 
+    #
+    # 最初に現れる「:」を区切り文字として、文字列を２つに分割する
+    # @param str [String] 分割対象文字列
+    # @return [Array] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.colon(str)
       if (m = /^(\s*([^\s]+):)(.*)$/.match(str))
-        key = m[1]
-        value = m[3]
+        left = m[1]
+        right = m[3]
       end
 
-      [key, value]
+      [left, right]
     end
 
+    #
+    # 最初に現れる「-」と空白文字の組み合わせを区切り文字として、文字列を２つに分割する
+    # @param str [String] 分割対象文字列
+    # @return [Array] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.hyphen_space(str)
       if (m = /^(\s*((\-\s+)+))(.+)$/.match(str))
-        key = m[1]
-        value = m[4]
+        left = m[1]
+        right = m[4]
       end
 
-      [key, value]
+      [left, right]
     end
 
+    #
+    # YAML形式の文字列に、シングルクォーテーションでのエスケープが必要かを調べる（第1段階）
+    # @param line [String] 対象文字列
+    # @param [Hash] state
+    # @return [Array] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.escape_single_quote_yaml_first(line, state)
+      # lineに対して": "での分割を試みる
       k, v = colon_space(line)
       state[:mes].output_info("1|k=#{k}")
       k, v = colon(line) unless k
@@ -237,4 +312,4 @@ module Filex
       end
     end
   end
-end
+end      
