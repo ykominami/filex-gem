@@ -1,0 +1,115 @@
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  TargetRubyVersion: 2.5
+  DisplayCopNames: true
+#
+  StyleGuideBaseURL: https://github.com/fortissimo1997/ruby-style-guide/blob/japanese/README.ja.md
+#
+  Exclude:
+    - "Rakefile"
+    - "*.gemspec"
+    - "vendor/**/*"
+    - "spec/*.rb"
+    - 'bin/console'
+    - 'bin/setup'
+
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+Layout/SpaceInsideBlockBraces:
+  EnforcedStyle: space
+  SpaceBeforeBlockParameters: false
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
+Lint/UnderscorePrefixedVariableName:
+  Enabled: false
+Lint/UnusedMethodArgument:
+  Enabled: false
+
+Metrics/LineLength:
+  Enabled: false
+Metrics/ClassLength:
+  Exclude:
+#    - "test/**/*.rb"
+Metrics/ParameterLists:
+  Max: 7
+Metrics/MethodLength:
+  Max: 30
+
+Naming/FileName:
+  Enabled: false
+Naming/UncommunicativeMethodParamName:
+  AllowedNames:
+    - z
+
+Style/AsciiComments:
+  Enabled: false
+Style/HashSyntax:
+  Exclude:
+    - "**/*.rake"
+    - "Rakefile"
+Style/EmptyMethod:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Style/NumericLiterals:
+  Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
+Style/TrailingCommaInArguments:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/WordArray:
+  Enabled: false
+Style/BarePercentLiterals:
+  EnforcedStyle: percent_q
+Style/BracesAroundHashParameters:
+  Enabled: false
+Style/PercentQLiterals:
+  Enabled: false
+Style/UnneededPercentQ:
+  Enabled: false
+Style/IfUnlessModifier:
+  Enabled: false
+Style/NumericPredicate:
+  Enabled: false
+Style/MutableConstant:
+  Enabled: false
+Style/SymbolArray:
+  Enabled: false
+Style/FormatString:
+  Enabled: false
+Style/ConditionalAssignment:
+  Enabled: false
+Style/WhileUntilModifier:
+  Enabled: false
+Style/RedundantBegin:
+  Enabled: false
+Style/YodaCondition:
+  EnforcedStyle: forbid_for_equality_operators_only
+Style/TernaryParentheses:
+  EnforcedStyle: require_parentheses_when_complex
+Style/MethodCallWithArgsParentheses:
+  Exclude:
+    - "**/*.rake"
+    - "Rakefile"
+    - "Gemfile"
+  Enabled: true
+  IgnoredMethods:
+    - p
+    - pp
+    - puts
+    - print
+    - printf
+    - raise
+    - require
