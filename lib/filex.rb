@@ -17,7 +17,7 @@ module Filex
   class Error < StandardError; end
 
   #
-  # ファイル操作用モジュール
+  # ファイル操作用クラス
   #
   class Filex # rubocop:disable Metrics/ClassLength
     #
