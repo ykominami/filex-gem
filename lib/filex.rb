@@ -128,7 +128,7 @@ module Filex
     end
 
     #
-    # eRubyスクリプト文字列を、ハッシュを用いて置換した内容を1個の文字列に変換
+    # eRubyスクリプト文字列を、ハッシュを用いて置換した内容を、1個の文字列に変換
     #
     # @param eruby_str [String] eRubyスクリプト文字列
     # @param data [Hash] eRubyスクリプト置換用ハッシュ
@@ -216,7 +216,7 @@ module Filex
     # @param str [String] 分割対象文字列
     # @return [Array<String>] 第0要素　分割文字列の左側部分、第１要素　分割文字列の右側部分
     def self.hyphen_space(str)
-      if (m = /^(\s*((\-\s+)+))(.+)$/.match(str))
+      if (m = /^(\s*((\-\s+)+))(.*)$/.match(str))
         left = m[1]
         right = m[4]
       end
@@ -233,30 +233,43 @@ module Filex
     def self.escape_single_quote_yaml_first(line, state)
       # lineに対して": "での分割を試みる
       left, right = colon_space(line)
-      state[:mes].output_info("1|left=#{left}")
+      state[:mes].output_info("F1|left=#{left}|right=#{right}")
+      # 分割できなければ、lineに対して":"での分割を試みる
       left, right = colon(line) unless left
-      state[:mes].output_info("2|left=#{left}")
+      state[:mes].output_info("F2|left=#{left}|right=#{right}")
 
+      # 右側部分に"-"が含まれていれば、"- "で区切れるか調べる
       if right&.index("-")
         left, right = hyphen_space(line)
-        state[:mes].output_info("3|left=#{left}")
+        state[:mes].output_info("F3|left=#{left}")
         if left
           state[:need_quoto] = true
           state[:mes].output_info("NQ|1|need_quoto=#{state[:need_quoto]}")
         end
       end
 
+      # lineが":"が分割できなければ、lineに対して"- "での分割を試みる
       unless left
         left, right = hyphen_space(line)
+        state[:mes].output_info("F4|left=#{left}|right=#{right}")
+        if right&.index("-") == 0
+          state[:mes].output_info("F-X|index=0|right.size=#{right.size}")
+          if right.size == 1
+            left += right
+            right = nil
+          else
+            state[:need_quoto] = true
+          end
+        end
       end
 
+      state[:mes].output_info("FE|left=#{left}|right=#{right}")
       [left, right]
     end
 
     #
     # YAML形式の文字列に、シングルクォーテーションでのエスケープが必要かを調べる（第2段階）
     #
-    # @param line [String] 対象文字列
     # @param right [String] 対象文字列の分割右側部分
     # @param state [Hash] 状態
     # @option state [Messagex] :mes Messagexクラスのインスタンス
@@ -285,18 +298,19 @@ module Filex
     # @param right [String] 対象文字列の分割右側部分
     # @return [Array<String>] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
     def self.escape_single_quote_yaml_second(line, state, left, right)
-      state[:mes].output_info("4|left=#{left}|right=#{right}")
-
       return [left, right] if right.nil? || right.strip.empty?
 
+      state[:mes].output_info("S1|left=#{left}|right=#{right}")
       state[:has_quoto] = true if right.index("'")
 
-      return [left, right] if right.index(":").nil?
+      if right.index(":")
+        state[:mes].output_info("S2|left=#{left}|right=#{right}")
 
-      return([left, right]) if /\d:/.match?(right)
-
+        return([left, right]) if /\d:/.match?(right)
+        state[:mes].output_info("S3|left=#{left}|right=#{right}")
+      end
       left2, right2 = colon_space(right)
-      state[:mes].output_info("51|left2=#{left2}|right2=#{right2}")
+      state[:mes].output_info("S4|left2=#{left2}|right2=#{right2}")
 
       unless left2
         left2, right2 = check_colon_in_right(right, state)
@@ -305,8 +319,9 @@ module Filex
       if left2
         left += left2
         right = right2
-        state[:mes].output_info("6|left=#{left}|right=#{right}")
+        state[:mes].output_info("S5|left=#{left}|right=#{right}")
       end
+      state[:mes].output_info("S6|left=#{left}|right=#{right}")
       [left, right]
     end
 
@@ -322,17 +337,20 @@ module Filex
     # @return [void]
     def self.escape_single_quote_yaml_third(line, state, left, right)
       return if right.nil? || right.strip.empty?
+      state[:mes].output_info("T1|left=#{left}|right=#{right}")
 
       return if state[:need_quoto]
+      state[:mes].output_info("T2|left=#{left}|right=#{right}")
 
       return unless right.index(":") && right.index("*")
+      state[:mes].output_info("T3|left=#{left}|right=#{right}")
 
-      state[:mes].output_info("1 not need_quoto")
+      state[:mes].output_info("T4 not need_quoto")
       unless right.index("-")
         state[:need_quoto] = true
-        state[:mes].output_info("NQ|2|need_quoto=#{state[:need_quoto]}")
+        state[:mes].output_info("NQ|T5|need_quoto=#{state[:need_quoto]}")
       end
-      state[:mes].output_info("1A need_quoto=#{state[:need_quoto]}")
+      state[:mes].output_info("T6 need_quoto=#{state[:need_quoto]}")
     end
 
     #
