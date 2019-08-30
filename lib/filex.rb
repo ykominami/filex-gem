@@ -62,7 +62,7 @@ module Filex
     end
 
     #
-    # YAML形式ファイルを存在チェック、（eRubyスクリプトとしての）YAMLファイルをハッシュを用いて置換した後にRubyのオブジェクトに変換
+    # YAML形式ファイルの存在チェック、（eRubyスクリプトとしての）YAMLファイルをハッシュを用いて置換した後にRubyのオブジェクトに変換
     #
     # @param yamlfname [String] yamlファイル名(eRubyスクリプトでもある)
     # @param objx [Hash] eRubyスクリプト置換用ハッシュ
@@ -342,7 +342,7 @@ module Filex
       return if state[:need_quoto]
       state[:mes].output_info("T2|left=#{left}|right=#{right}")
 
-      return unless right.index(":") && right.index("*")
+      return unless (right.index(":") || right.index("*"))
       state[:mes].output_info("T3|left=#{left}|right=#{right}")
 
       state[:mes].output_info("T4 not need_quoto")
