@@ -4,12 +4,12 @@
 # ファイル操作用モジュール
 #
 module Filex
-  require "digest"
-  require "pp"
-  require "erubis"
-  require "yaml"
-  require "messagex"
-  require "filex/version"
+  require 'digest'
+  require 'pp'
+  require 'erubis'
+  require 'yaml'
+  require 'messagex'
+  require 'filex/version'
 
   #
   # ファイル操作用モジュールのエラークラス
@@ -26,10 +26,10 @@ module Filex
     # @param mes [Messagex] Messagexクラスのインスタンス
     # @return [void]
     def self.setup(mes)
-      mes.add_exitcode("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE")
-      mes.add_exitcode("EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY")
-      mes.add_exitcode("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY")
-      mes.add_exitcode("EXIT_CODE_FILE_IS_EMPTY")
+      mes.add_exitcode('EXIT_CODE_CANNOT_ANALYZE_YAMLFILE')
+      mes.add_exitcode('EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY')
+      mes.add_exitcode('EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY')
+      mes.add_exitcode('EXIT_CODE_FILE_IS_EMPTY')
     end
 
     #
@@ -44,7 +44,7 @@ module Filex
       rescue Error => e
         mes.output_exception(e)
         mes.output_fatal("str=#{str}")
-        exit(mes.ec("EXIT_CODE_CANNOT_ANALYZE_YAMLFILE"))
+        exit(mes.ec('EXIT_CODE_CANNOT_ANALYZE_YAMLFILE'))
       end
 
       yamlhs
@@ -71,7 +71,7 @@ module Filex
     def self.check_and_expand_yamlfile(yamlfname, objx, mes)
       lines = Filex.check_and_expand_file_lines(yamlfname, objx, mes)
       str = escape_by_single_quote_with_lines_in_yamlformat(lines, mes).join("\n")
-      mes.output_debug("=str")
+      mes.output_debug('=str')
       mes.output_debug(str)
       load_yaml(str, mes)
     end
@@ -95,30 +95,30 @@ module Filex
     # @return [String] ファイルの内容
     def self.check_and_load_file(fname, mes)
       size = File.size?(fname)
-      if size && (size > 0)
+      if size&.positive?
         begin
           strdata = File.read(fname)
         rescue IOError => e
           mesg = "Can't read #{fname}"
           mes.output_fatal(mesg)
           mes.output_exception(e)
-          exit(mes.ec("EXIT_CODE_CANNOT_READ_FILE"))
+          exit(mes.ec('EXIT_CODE_CANNOT_READ_FILE'))
         rescue SystemCallError => e
           mesg = "Can't write #{fname}"
           mes.output_fatal(mesg)
           mes.output_exception(e)
-          exit(mes.ec("EXIT_CODE_CANNOT_READ_FILE"))
+          exit(mes.ec('EXIT_CODE_CANNOT_READ_FILE'))
         end
       else
-        mesg = %Q(Can not find #{fname} or is empty| size=|#{size}|)
+        mesg = %(Can not find #{fname} or is empty| size=|#{size}|)
         mes.output_error(mesg)
-        exit(mes.ec("EXIT_CODE_CANNOT_FIND_FILE_OR_EMPTY"))
+        exit(mes.ec('EXIT_CODE_CANNOT_FIND_FILE_OR_EMPTY'))
       end
 
       if strdata.strip.empty?
-        mesg = %Q(#{fname} is empty)
+        mesg = %(#{fname} is empty)
         mes.output_fatal(mesg)
-        exit(mes.ec("EXIT_CODE_FILE_IS_EMPTY"))
+        exit(mes.ec('EXIT_CODE_FILE_IS_EMPTY'))
       else
         digest = Digest::MD5.hexdigest(strdata)
         mes.output_info(digest)
@@ -142,12 +142,12 @@ module Filex
         strdata = Erubis::Eruby.new(eruby_str).result(data)
       rescue NameError => e
         mes.output_exception(e)
-        fnames.map {|x| mes.output_fatal(%Q(#{x[0]}=#{x[1]})) }
-        exit(mes.ec("EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY"))
+        fnames.map { |x| mes.output_fatal(%(#{x[0]}=#{x[1]})) }
+        exit(mes.ec('EXIT_CODE_NAME_ERROR_EXCEPTION_IN_ERUBY'))
       rescue Error => e
         mes.output_exception(e)
-        fnames.map {|x| mes.output_fatal(%Q(#{x[0]}=#{x[1]})) }
-        exit(mes.ec("EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY"))
+        fnames.map { |x| mes.output_fatal(%(#{x[0]}=#{x[1]})) }
+        exit(mes.ec('EXIT_CODE_ERROR_EXCEPTION_IN_ERUBY'))
       end
       strdata
     end
@@ -164,8 +164,7 @@ module Filex
       mes.output_info("fname=#{fname}")
       mes.output_info("strdata=#{strdata}")
       mes.output_info("objx=#{objx}")
-      strdata2 = expand_str(strdata, objx, mes, fname: fname)
-      strdata2
+      expand_str(strdata, objx, mes, fname: fname)
     end
 
     #
@@ -216,11 +215,39 @@ module Filex
     # @param str [String] 分割対象文字列
     # @return [Array<String>] 第0要素　分割文字列の左側部分、第１要素　分割文字列の右側部分
     def self.hyphen_space(str)
-      if (m = /^(\s*((\-\s+)+))(.*)$/.match(str))
+      if (m = /^(\s*((-\s+)+))(.*)$/.match(str))
         left = m[1]
         right = m[4]
       end
 
+      [left, right]
+    end
+
+    def self.right_hyphen(line, right, state)
+      left = nil
+      if right&.index('-')
+        left, _right = hyphen_space(line)
+        state[:mes].output_info("F3|left=#{left}")
+        if left
+          state[:need_quoto] = true
+          state[:mes].output_info("NQ|1|need_quoto=#{state[:need_quoto]}")
+        end
+      end
+      left
+    end
+
+    def self.left_hyphen_space(line, state)
+      left, right = hyphen_space(line)
+      state[:mes].output_info("F4|left=#{left}|right=#{right}")
+      if right&.index('-')&.zero?
+        state[:mes].output_info("F-X|index=0|right.size=#{right.size}")
+        if right.size == 1
+          left += right
+          right = nil
+        else
+          state[:need_quoto] = true
+        end
+      end
       [left, right]
     end
 
@@ -239,29 +266,10 @@ module Filex
       state[:mes].output_info("F2|left=#{left}|right=#{right}")
 
       # 右側部分に"-"が含まれていれば、"- "で区切れるか調べる
-      if right&.index("-")
-        left, right = hyphen_space(line)
-        state[:mes].output_info("F3|left=#{left}")
-        if left
-          state[:need_quoto] = true
-          state[:mes].output_info("NQ|1|need_quoto=#{state[:need_quoto]}")
-        end
-      end
+      left = right_hyphen(line, right, state)
 
       # lineが":"が分割できなければ、lineに対して"- "での分割を試みる
-      unless left
-        left, right = hyphen_space(line)
-        state[:mes].output_info("F4|left=#{left}|right=#{right}")
-        if right&.index("-") == 0
-          state[:mes].output_info("F-X|index=0|right.size=#{right.size}")
-          if right.size == 1
-            left += right
-            right = nil
-          else
-            state[:need_quoto] = true
-          end
-        end
-      end
+      left, _right = left_hyphen_space(line, state) unless left
 
       state[:mes].output_info("FE|left=#{left}|right=#{right}")
       [left, right]
@@ -297,24 +305,23 @@ module Filex
     # @param left [String] 対象文字列の分割左側部分
     # @param right [String] 対象文字列の分割右側部分
     # @return [Array<String>] 第0要素　分割された文字列の左側部分、第１要素　分割された文字列の右側部分
-    def self.escape_single_quote_yaml_second(line, state, left, right)
+    def self.escape_single_quote_yaml_second(_line, state, left, right)
       return [left, right] if right.nil? || right.strip.empty?
 
       state[:mes].output_info("S1|left=#{left}|right=#{right}")
       state[:has_quoto] = true if right.index("'")
 
-      if right.index(":")
+      if right.index(':')
         state[:mes].output_info("S2|left=#{left}|right=#{right}")
 
         return([left, right]) if /\d:/.match?(right)
+
         state[:mes].output_info("S3|left=#{left}|right=#{right}")
       end
       left2, right2 = colon_space(right)
       state[:mes].output_info("S4|left2=#{left2}|right2=#{right2}")
 
-      unless left2
-        left2, right2 = check_colon_in_right(right, state)
-      end
+      left2, right2 = check_colon_in_right(right, state) unless left2
 
       if left2
         left += left2
@@ -335,18 +342,21 @@ module Filex
     # @param left [String] 対象文字列の分割左側部分
     # @param right [String] 対象文字列の分割右側部分
     # @return [void]
-    def self.escape_single_quote_yaml_third(line, state, left, right)
+    def self.escape_single_quote_yaml_third(_line, state, left, right)
       return if right.nil? || right.strip.empty?
+
       state[:mes].output_info("T1|left=#{left}|right=#{right}")
 
       return if state[:need_quoto]
+
       state[:mes].output_info("T2|left=#{left}|right=#{right}")
 
-      return unless (right.index(":") || right.index("*"))
+      return unless right.index(':') || right.index('*')
+
       state[:mes].output_info("T3|left=#{left}|right=#{right}")
 
-      state[:mes].output_info("T4 not need_quoto")
-      unless right.index("-")
+      state[:mes].output_info('T4 not need_quoto')
+      unless right.index('-')
         state[:need_quoto] = true
         state[:mes].output_info("NQ|T5|need_quoto=#{state[:need_quoto]}")
       end
@@ -367,12 +377,10 @@ module Filex
 
         left, right = escape_single_quote_yaml_first(line, state)
         left, right = escape_single_quote_yaml_second(line, state, left, right)
-        if left
-          escape_single_quote_yaml_third(line, state, left, right)
-        end
+        escape_single_quote_yaml_third(line, state, left, right) if left
         if state[:need_quoto] && !state[:has_quoto]
-          state[:mes].output_info("2 need_quoto")
-          left + %q(') + right + %q(')
+          state[:mes].output_info('2 need_quoto')
+          "#{left}'#{right}'"
         else
           line
         end

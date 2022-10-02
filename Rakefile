@@ -1,6 +1,29 @@
-require "bundler/gem_tasks"
-require "rspec/core/rake_task"
+# frozen_string_literal: true
 
-RSpec::Core::RakeTask.new(:spec)
+require 'bundler/gem_tasks'
 
-task :default => :spec
+begin
+  require 'rspec/core/rake_task'
+rescue LoadError => e
+  puts e.message
+end
+begin
+  RSpec::Core::RakeTask.new(:spec)
+rescue NameError, LoadError => e
+  puts e.message
+end
+begin
+  require 'rubocop/rake_task'
+rescue LoadError => e
+  puts e.message
+end
+begin
+  RuboCop::RakeTask.new
+rescue NameError, LoadError => e
+  puts e.message
+end
+begin
+  task default: %i[spec rubocop]
+rescue LoadError => e
+  puts e.message
+end
