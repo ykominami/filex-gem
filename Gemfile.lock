@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    filex (0.1.7)
+    filex (0.1.8)
       bundler
       erubis
       messagex
@@ -94,4 +94,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   2.3.17
+   2.3.22
