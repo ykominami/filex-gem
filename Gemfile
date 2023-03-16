@@ -22,5 +22,5 @@ group :development do
   gem 'yard'
 end
 
-gem "activesupport" , "~> 7.0.4.1"
+gem "activesupport" , "~> 7.0.4.3"
 
