@@ -43,10 +43,10 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'messagex'
   spec.add_runtime_dependency 'rake', '~> 13.0'
 
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'rubocop-performance'
-  spec.add_development_dependency 'rubocop-rails'
+  #  spec.add_development_dependency 'rspec', '~> 3.0'
+  #  spec.add_development_dependency 'rubocop'
+  #  spec.add_development_dependency 'rubocop-performance'
+  #  spec.add_development_dependency 'rubocop-rails'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 end
