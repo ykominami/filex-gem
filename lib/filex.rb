@@ -5,7 +5,6 @@
 #
 module Filex
   require 'digest'
-  require 'pp'
   require 'erubis'
   require 'yaml'
   require 'messagex'
