@@ -89,7 +89,7 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.5.0)
-    yard (0.9.34)
+    yard (0.9.36)
 
 PLATFORMS
   ruby
@@ -107,7 +107,7 @@ DEPENDENCIES
   rubocop-performance
   rubocop-rake
   rubocop-rspec
-  yard
+  yard (~> 0.9.36)
 
 BUNDLED WITH
    2.5.1

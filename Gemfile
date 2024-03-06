@@ -19,7 +19,7 @@ group :test, optional: true do
 end
 
 group :development do
-  gem 'yard'
+  gem 'yard', "~> 0.9.36"
 end
 
 gem 'activesupport', '~> 7.1.2'
