@@ -24,4 +24,4 @@ end
 
 gem 'activesupport', '~> 7.1.2'
 
-gem 'rexml', '~> 3.2.7'
+gem 'rexml', '~> 3.3.2'
