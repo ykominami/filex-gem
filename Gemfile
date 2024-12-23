@@ -19,9 +19,9 @@ group :test, optional: true do
 end
 
 group :development do
-  gem 'yard', "~> 0.9.36"
+  gem 'yard', '~> 0.9.36'
 end
 
 gem 'activesupport', '~> 7.1.2'
 
-gem 'rexml', '~> 3.3.2'
+gem 'rexml', '~> 3.3.9'
